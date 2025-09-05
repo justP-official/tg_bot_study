@@ -19,12 +19,15 @@ async def start_cmd(message: types.Message):
 
 
 @dispatcher.message()
-async def echo(message: types.Message):
+async def echo(message: types.Message, bot: Bot):
+    await bot.send_message(message.from_user.id, "Echo:")
     await message.answer(message.text)
+    await message.reply(message.text)
 
 
 
 async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
     await dispatcher.start_polling(bot)
 
 
