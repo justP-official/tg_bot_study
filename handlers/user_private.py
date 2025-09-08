@@ -2,6 +2,7 @@ from aiogram import F, types, Router
 from aiogram.filters import CommandStart, Command, or_f
 
 from filters.chat_types import ChatTypeFilter
+from keyboards import reply
 
 user_private_router = Router()
 user_private_router.message.filter(ChatTypeFilter(["private"]))
@@ -9,14 +10,14 @@ user_private_router.message.filter(ChatTypeFilter(["private"]))
 
 @user_private_router.message(CommandStart())
 async def start_cmd(message: types.Message):
-    await message.answer("Привет, я виртуальный помощник")
+    await message.answer("Привет, я виртуальный помощник", reply_markup=reply.start_keyboard)
 
 
 # @user_private_router.message(F.text.lower() == "меню")
 @user_private_router.message(or_f(Command("menu"), (F.text.lower() == "меню")))
 @user_private_router.message(Command("menu"))
 async def menu_cmd(message: types.Message):
-    await message.answer("Menu:")
+    await message.answer("Menu:", reply_markup=reply.del_keyboard)
 
 
 @user_private_router.message(F.text.lower() == "о нас")
