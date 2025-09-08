@@ -1,5 +1,6 @@
 from aiogram import F, types, Router
 from aiogram.filters import CommandStart, Command, or_f
+from aiogram.enums import ParseMode
 
 from filters.chat_types import ChatTypeFilter
 from keyboards import reply
@@ -21,19 +22,23 @@ async def start_cmd(message: types.Message):
 @user_private_router.message(or_f(Command("menu"), (F.text.lower() == "меню")))
 @user_private_router.message(Command("menu"))
 async def menu_cmd(message: types.Message):
-    await message.answer("Menu:", reply_markup=reply.del_keyboard)
+    await message.answer("__Меню:__", # курсив
+                         reply_markup=reply.del_keyboard,
+                         parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @user_private_router.message(F.text.lower() == "о магазине")
 @user_private_router.message(Command("about"))
 async def about_cmd(message: types.Message):
-    await message.answer("О нас:")
+    await message.answer("<b>О нас:</b>", # жирный
+                         parse_mode=ParseMode.HTML)
 
 
 @user_private_router.message(F.text.lower() == "варианты оплаты")
 @user_private_router.message(Command("payment"))
 async def payment_cmd(message: types.Message):
-    await message.answer("Оплата:")
+    await message.answer("_Оплата:_", # курсив
+                         parse_mode=ParseMode.MARKDOWN)
 
 
 @user_private_router.message((F.text.lower().contains("доставк")) | (F.text.lower() == "варианты доставки"))

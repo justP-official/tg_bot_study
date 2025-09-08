@@ -9,7 +9,7 @@ start_keyboard = ReplyKeyboardMarkup(
         ],
         [
             KeyboardButton(text="Варианты доставки"),
-            KeyboardButton(text="Способы оплаты"),
+            KeyboardButton(text="Варианты оплаты"),
         ]
     ],
     resize_keyboard=True,
@@ -23,7 +23,7 @@ start_keyboard_with_builder_1.add(
     KeyboardButton(text="Меню"),
     KeyboardButton(text="О магазине"),
     KeyboardButton(text="Варианты доставки"),
-    KeyboardButton(text="Способы оплаты"),
+    KeyboardButton(text="Варианты оплаты"),
 )
 start_keyboard_with_builder_1.adjust(2, 2)
 
