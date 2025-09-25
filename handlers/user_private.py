@@ -58,7 +58,7 @@ async def payment_cmd(message: types.Message):
 @user_private_router.message(
     (F.text.lower().contains("доставк")) | (F.text.lower() == "варианты доставки"))
 @user_private_router.message(Command("shipping"))
-async def menu_cmd(message: types.Message):
+async def shipping_cmd(message: types.Message):
     text = as_list(
         as_marked_section(
             Bold("Варианты доставки/заказа:"),
