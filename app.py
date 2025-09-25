@@ -10,6 +10,8 @@ from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
 
+from database.engine import create_db, drop_db
+
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
 from handlers.admin_private import admin_router
@@ -28,7 +30,23 @@ dispatcher.include_router(user_group_router)
 dispatcher.include_router(admin_router)
 
 
+async def on_startup(bot):
+    run_param = False  # добавить через через argparse
+
+    if run_param:
+        await drop_db()
+
+    await create_db()
+
+
+async def on_shutdown(bot):
+    print("Бот лёг")
+
+
 async def main():
+    dispatcher.startup.register(on_startup)  # Функция, которая срабатывает при запуске бота
+    dispatcher.shutdown.register(on_shutdown)  # Функция, которая срабатывает при выключении бота
+
     await bot.delete_webhook(drop_pending_updates=True)
 
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())  -- Если нужно удалить команды
