@@ -107,6 +107,11 @@ async def add_name(message: types.Message, state: FSMContext):
     await state.set_state(AddProduct.description)
 
 
+@admin_router.message(StateFilter(AddProduct.name))
+async def wrong_name(message: types.Message, state: FSMContext):
+    await message.answer("Вы ввели недопустимые данные. Введите название товара")
+
+
 @admin_router.message(StateFilter(AddProduct.description), F.text)
 async def add_description(message: types.Message, state: FSMContext):
     await state.update_data(description=message.text)
@@ -116,6 +121,11 @@ async def add_description(message: types.Message, state: FSMContext):
     await state.set_state(AddProduct.price)
 
 
+@admin_router.message(StateFilter(AddProduct.description))
+async def wrong_description(message: types.Message, state: FSMContext):
+    await message.answer("Вы ввели недопустимые данные. Введите описание товара")
+
+
 @admin_router.message(StateFilter(AddProduct.price), F.text)
 async def add_price(message: types.Message, state: FSMContext):
     await state.update_data(price=message.text)
@@ -123,6 +133,11 @@ async def add_price(message: types.Message, state: FSMContext):
     await message.answer("Загрузите изображение товара")
 
     await state.set_state(AddProduct.image)
+
+
+@admin_router.message(StateFilter(AddProduct.price))
+async def wrong_price(message: types.Message, state: FSMContext):
+    await message.answer("Вы ввели недопустимые данные. Введите цену товара")
 
 
 @admin_router.message(StateFilter(AddProduct.image), F.photo)
@@ -137,3 +152,9 @@ async def add_image(message: types.Message, state: FSMContext):
     await message.answer(str(data))
 
     await state.clear()
+
+
+
+@admin_router.message(StateFilter(AddProduct.image))
+async def wrong_image(message: types.Message, state: FSMContext):
+    await message.answer("Вы ввели недопустимые данные. Загрузите изображение товара")
