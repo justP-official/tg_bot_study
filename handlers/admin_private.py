@@ -59,9 +59,15 @@ async def add_product(message: types.Message, state: FSMContext):
     await state.set_state(AddProduct.name)
 
 
-@admin_router.message(Command("отмена"))
-@admin_router.message(F.text.casefold() == "отмена")
+@admin_router.message(StateFilter("*"), Command("отмена"))  # любое состояние
+@admin_router.message(StateFilter("*"), F.text.casefold() == "отмена")
 async def cancel_handler(message: types.Message, state: FSMContext) -> None:
+    current_state = await state.get_state()
+
+    if current_state is None:
+        return
+    
+    await state.clear()
     await message.answer("Действия отменены", reply_markup=ADMIN_KB)
 
 
