@@ -4,6 +4,7 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.strategy import FSMStrategy
 
 from dotenv import find_dotenv, load_dotenv
 
@@ -11,6 +12,7 @@ load_dotenv(find_dotenv())
 
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
+from handlers.admin_private import admin_router
 from common.bot_cmds_list import private
 
 ALLOWED_UPDATES = ["message", "edited_message"]
@@ -18,11 +20,12 @@ ALLOWED_UPDATES = ["message", "edited_message"]
 bot = Bot(token=os.getenv("TG_TOKEN"), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 bot.my_admins_list = []
 
-dispatcher = Dispatcher()
+dispatcher = Dispatcher(fsm_strategy=FSMStrategy.USER_IN_CHAT)
 
 
 dispatcher.include_router(user_private_router)
 dispatcher.include_router(user_group_router)
+dispatcher.include_router(admin_router)
 
 
 async def main():
