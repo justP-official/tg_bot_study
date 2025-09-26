@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply import get_keyboard
 
-from database.orm_query import orm_add_product
+from database.orm_query import orm_add_product, orm_delete_product, orm_get_product, orm_get_products, orm_update_product
 
 
 admin_router = Router()
@@ -17,11 +17,9 @@ admin_router.message.filter(ChatTypeFilter(["private"]), IsAdmin())
 
 ADMIN_KB = get_keyboard(
     "Добавить товар",
-    "Изменить товар",
-    "Удалить товар",
-    "Я так, просто посмотреть зашел",
+    "Ассортимент",
     placeholder="Выберите действие",
-    sizes=(2, 1, 1),
+    sizes=(2,),
 )
 
 
@@ -30,19 +28,16 @@ async def add_product(message: types.Message):
     await message.answer("Что хотите сделать?", reply_markup=ADMIN_KB)
 
 
-@admin_router.message(F.text == "Я так, просто посмотреть зашел")
-async def starring_at_product(message: types.Message):
+@admin_router.message(F.text == "Ассортимент")
+async def starring_at_product(message: types.Message, session: AsyncSession):
     await message.answer("ОК, вот список товаров")
 
-
-@admin_router.message(F.text == "Изменить товар")
-async def change_product(message: types.Message):
-    await message.answer("ОК, вот список товаров")
-
-
-@admin_router.message(F.text == "Удалить товар")
-async def delete_product(message: types.Message):
-    await message.answer("Выберите товар(ы) для удаления")
+    for product in await orm_get_products(session):
+        await message.answer_photo(
+            product.image,
+            caption=f"<strong>{product.name}\
+                </strong>\n{product.description}\nСтоимость: {round(product.price, 2)}"
+        )
 
 
 #Код ниже для машины состояний (FSM)
