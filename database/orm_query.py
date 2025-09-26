@@ -21,7 +21,7 @@ async def orm_get_products(session: AsyncSession):
 
     result = await session.execute(query)
 
-    return result.scalar().all()
+    return result.scalars().all()
 
 
 async def orm_get_product(session: AsyncSession, product_id: int):
