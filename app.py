@@ -19,7 +19,7 @@ from common.bot_cmds_list import private
 
 from midlewares.db import DataBaseSession
 
-ALLOWED_UPDATES = ["message", "edited_message"]
+# ALLOWED_UPDATES = ["message", "edited_message", "callback_query"]
 
 bot = Bot(token=os.getenv("TG_TOKEN"), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 bot.my_admins_list = []
@@ -56,7 +56,7 @@ async def main():
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())  -- Если нужно удалить команды
     
     await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
-    await dispatcher.start_polling(bot, allowed_updates=ALLOWED_UPDATES)
+    await dispatcher.start_polling(bot, allowed_updates=dispatcher.resolve_used_update_types())
 
 
 asyncio.run(main())

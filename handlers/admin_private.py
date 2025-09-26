@@ -46,6 +46,17 @@ async def starring_at_product(message: types.Message, session: AsyncSession):
         )
 
 
+@admin_router.callback_query(F.data.startswith("delete_"))
+async def delete_product(callback: types.CallbackQuery, session: AsyncSession):
+    product_id = callback.data.split("_")[-1]
+
+    await orm_delete_product(session=session, product_id=int(product_id))
+
+    await callback.answer("Товар удалён!", show_alert=True)  # Ответ на колбэк. Всплывающий текст (может быть пустым)
+    await callback.message.answer("Товар удалён!")  # Ответное сообщение
+
+
+
 #Код ниже для машины состояний (FSM)
 
 class AddProduct(StatesGroup):
