@@ -3,8 +3,12 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply import get_keyboard
+
+from database.orm_query import orm_add_product
 
 
 admin_router = Router()
@@ -141,15 +145,21 @@ async def process_wrong_price(message: types.Message, state: FSMContext):
 
 
 @admin_router.message(StateFilter(AddProduct.image), F.photo)
-async def add_image(message: types.Message, state: FSMContext):
+async def add_image(message: types.Message, state: FSMContext, session: AsyncSession):
     await state.update_data(image=message.photo[-1].file_id)
-
-    await message.answer("Товар добавлен", reply_markup=ADMIN_KB)
 
     data = await state.get_data()
 
-    await state.clear()
-
+    try:
+        await orm_add_product(session=session, data=data)
+        await message.answer("Товар добавлен", reply_markup=ADMIN_KB)
+    except Exception as e:
+        await message.answer(
+            f"Ошибка: {e}",
+            reply_markup=ADMIN_KB
+        )
+    finally:
+        await state.clear()
 
 
 @admin_router.message(StateFilter(AddProduct.image))
