@@ -1,5 +1,5 @@
 from aiogram import F, Router, types
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command, StateFilter, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
@@ -23,6 +23,22 @@ ADMIN_KB = get_keyboard(
     placeholder="Выберите действие",
     sizes=(2,),
 )
+
+
+class AddProduct(StatesGroup):
+    name = State()
+    description = State()
+    price = State()
+    image = State()
+
+    product_for_change = None
+
+    texts = {
+        'AddProduct:name': 'Введите название заново:',
+        'AddProduct:description': 'Введите описание заново:',
+        'AddProduct:price': 'Введите стоимость заново:',
+        'AddProduct:image': 'Этот стейт последний, поэтому...',
+    }
 
 
 @admin_router.message(Command("admin"))
@@ -57,20 +73,19 @@ async def delete_product(callback: types.CallbackQuery, session: AsyncSession):
 
 
 
-#Код ниже для машины состояний (FSM)
+@admin_router.callback_query(StateFilter(None), F.data.startswith("change_"))
+async def change_product_callback(callback: types.CallbackQuery, state: FSMContext, session: AsyncSession):
+    product_id = callback.data.split("_")[-1]
 
-class AddProduct(StatesGroup):
-    name = State()
-    description = State()
-    price = State()
-    image = State()
+    product_for_change = await orm_get_product(session=session, product_id=int(product_id))
 
-    texts = {
-        'AddProduct:name': 'Введите название заново:',
-        'AddProduct:description': 'Введите описание заново:',
-        'AddProduct:price': 'Введите стоимость заново:',
-        'AddProduct:image': 'Этот стейт последний, поэтому...',
-    }
+    AddProduct.product_for_change = product_for_change
+
+    await callback.answer()
+    await callback.message.answer(
+        "Введите название товара", reply_markup=types.ReplyKeyboardRemove()
+    )
+    await state.set_state(AddProduct.name)
 
 
 @admin_router.message(StateFilter(None), F.text == "Добавить товар")
@@ -89,6 +104,9 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
 
     if current_state is None:
         return
+    
+    if AddProduct.product_for_change:
+        AddProduct.product_for_change = None
     
     await state.clear()
     await message.answer("Действия отменены", reply_markup=ADMIN_KB)
@@ -114,9 +132,16 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
         previous_state = step
 
 
-@admin_router.message(StateFilter(AddProduct.name), F.text)
+@admin_router.message(StateFilter(AddProduct.name), or_f(F.text, F.text == "."))
 async def add_name(message: types.Message, state: FSMContext):
-    await state.update_data(name=message.text)
+    if message.text == ".":
+        await state.update_data(name=AddProduct.product_for_change.name)
+    else:
+        if len(message.text) >= 100:
+            await message.animation("Название товара не должно превышать 100 символов! Введите заново")
+            return
+        
+        await state.update_data(name=message.text)
 
     await message.answer("Введите описание товара")
 
@@ -128,9 +153,12 @@ async def process_wrong_name(message: types.Message, state: FSMContext):
     await message.answer("Вы ввели недопустимые данные. Введите название товара")
 
 
-@admin_router.message(StateFilter(AddProduct.description), F.text)
+@admin_router.message(StateFilter(AddProduct.description), or_f(F.text, F.text == "."))
 async def add_description(message: types.Message, state: FSMContext):
-    await state.update_data(description=message.text)
+    if message.text == ".":
+        await state.update_data(description=AddProduct.product_for_change.description)
+    else:
+        await state.update_data(description=message.text)
 
     await message.answer("Введите стоимость товара")
 
@@ -142,9 +170,17 @@ async def process_wrong_description(message: types.Message, state: FSMContext):
     await message.answer("Вы ввели недопустимые данные. Введите описание товара")
 
 
-@admin_router.message(StateFilter(AddProduct.price), F.text)
+@admin_router.message(StateFilter(AddProduct.price), or_f(F.text, F.text == "."))
 async def add_price(message: types.Message, state: FSMContext):
-    await state.update_data(price=message.text)
+    if message.text == ".":
+        await state.update_data(price=AddProduct.product_for_change.price)
+    else:
+        try:
+            price = float(message.text)
+            await state.update_data(price=price)
+        except ValueError:
+            await message.answer("Введите корректное значение игры")
+            return
 
     await message.answer("Загрузите изображение товара")
 
@@ -156,15 +192,22 @@ async def process_wrong_price(message: types.Message, state: FSMContext):
     await message.answer("Вы ввели недопустимые данные. Введите цену товара")
 
 
-@admin_router.message(StateFilter(AddProduct.image), F.photo)
+@admin_router.message(StateFilter(AddProduct.image), or_f(F.photo, F.text == "."))
 async def add_image(message: types.Message, state: FSMContext, session: AsyncSession):
-    await state.update_data(image=message.photo[-1].file_id)
+    if message.text and message.text == ".":
+        await state.update_data(image=AddProduct.product_for_change.image)
+    else:
+        await state.update_data(image=message.photo[-1].file_id)
 
     data = await state.get_data()
 
     try:
-        await orm_add_product(session=session, data=data)
-        await message.answer("Товар добавлен", reply_markup=ADMIN_KB)
+        if AddProduct.product_for_change:
+            await orm_update_product(session=session, product_id=AddProduct.product_for_change.id, data=data)
+            await message.answer("Товар изменён", reply_markup=ADMIN_KB)
+        else:
+            await orm_add_product(session=session, data=data)
+            await message.answer("Товар добавлен", reply_markup=ADMIN_KB)
     except Exception as e:
         await message.answer(
             f"Ошибка: {e}",
@@ -172,6 +215,8 @@ async def add_image(message: types.Message, state: FSMContext, session: AsyncSes
         )
     finally:
         await state.clear()
+
+    AddProduct.product_for_change = None
 
 
 @admin_router.message(StateFilter(AddProduct.image))
