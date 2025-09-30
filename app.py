@@ -15,7 +15,7 @@ from database.engine import create_db, drop_db, session_maker
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
 from handlers.admin_private import admin_router
-from common.bot_cmds_list import private
+# from common.bot_cmds_list import private
 
 from midlewares.db import DataBaseSession
 
@@ -33,10 +33,7 @@ dispatcher.include_router(admin_router)
 
 
 async def on_startup(bot):
-    run_param = False  # добавить через через argparse
-
-    if run_param:
-        await drop_db()
+    # await drop_db()
 
     await create_db()
 
@@ -53,9 +50,9 @@ async def main():
 
     await bot.delete_webhook(drop_pending_updates=True)
 
-    # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())  -- Если нужно удалить команды
+    # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())  # -- Если нужно удалить команды
+    # await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
     
-    await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
     await dispatcher.start_polling(bot, allowed_updates=dispatcher.resolve_used_update_types())
 
 
