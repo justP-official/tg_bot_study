@@ -35,6 +35,8 @@ async def user_menu(callback: types.CallbackQuery, callback_data: MenuCallBack, 
         session=session,
         level=callback_data.level,
         menu_name=callback_data.menu_name,
+        category=callback_data.category,
+        page=callback_data.page,
     )
 
     await callback.message.edit_media(media=media, reply_markup=reply_markup)
