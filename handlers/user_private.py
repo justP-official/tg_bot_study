@@ -10,7 +10,7 @@ from database.orm_query import (
 from filters.chat_types import ChatTypeFilter
 from keyboards.inline import get_callback_btns, MenuCallBack
 
-from menu_processing import get_menu_content
+from handlers.menu_processing import get_menu_content
 
 
 
